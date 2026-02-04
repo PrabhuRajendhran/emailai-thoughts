@@ -1,8 +1,3 @@
-Nice — this is the **exec-plus-architect summary** you’ll reuse again and again.
-I’ll keep it **structured, concise, time-phased**, and explicit about **DSPy**.
-
----
-
 # Archer — Issues & Fixes by Layer (Time-phased)
 
 ---
@@ -187,30 +182,7 @@ Use DSPy **only after** prompt scope is minimized.
 
 ---
 
-## DSPy — Clear Positioning (important)
-
-**Where DSPy helps**
-
-* Prompt wording optimization
-* Instruction clarity
-* Label description refinement
-
-**Where DSPy should NOT be used**
-
-* Taxonomy logic
-* Routing decisions
-* Confidence estimation
-* SLA or rate control
-
-### One-liner you can reuse
-
-> **DSPy is useful for refining a small, stable prompt surface — not for compensating for architectural or taxonomy complexity.**
-
----
-
 ## Final mental model (very reusable)
 
 > **Clean early, decide cheaply, think only when needed.
 > Prompts score; systems decide; LLMs resolve ambiguity.**
-* create a **30/60/90 execution plan**
-* map fixes to **cost & SLA deltas**
