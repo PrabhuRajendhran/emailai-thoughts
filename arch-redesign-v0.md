@@ -265,8 +265,165 @@ Clean-slate pays off **only if** you commit to the principles.
 
 > **Design the system as if the LLM will fail, throttle, or lie — and then add it back as a helper, not a dependency.**
 
+---
+
+# How long does the shift actually take?
+
+## Short answer (executive view)
+
+* **Minimum viable shift:** ~**8–10 weeks**
+* **Clean, stable, defensible shift:** ~**12–16 weeks**
+* **Gold-standard 9.5/10 system:** ~**5–6 months**
+
+Anything faster means cutting correctness or observability.
+
+---
+
+## Why this isn’t a “rewrite from scratch”
+
+You’re **not rebuilding everything**.
+You’re:
+
+* collapsing sequential logic
+* moving intelligence earlier
+* externalizing hierarchy
+* demoting the LLM
+
+Most infra stays.
+
+---
+
+## Phase-by-phase timeline (realistic)
+
+### Phase 0 — Alignment & contracts (1–2 weeks)
+
+**Goal:** stop accidental redesign.
+
+Deliverables:
+
+* Canonical email schema
+* Candidate-set contract
+* Model output schema
+* Taxonomy ownership clarified (DB + code)
+
+💡 *This phase saves months later.*
+
+---
+
+### Phase 1 — Deterministic spine first (2–3 weeks)
+
+**Goal:** make system work without LLM.
+
+Work:
+
+* Canonicalization + PII redaction
+* Signal-first chunking
+* Taxonomy service
+* Rule enforcement (pre + post mapper unified logically)
+
+LLM still runs, but is no longer trusted.
+
+---
+
+### Phase 2 — Collapse hierarchical LLM calls (2 weeks)
+
+**This is the big win.**
+
+Work:
+
+* Replace 5 sequential LLM calls with:
+
+  * deterministic hierarchy resolution
+  * single scoring call
+* Parallelize embeddings + metadata + taxonomy fetch
+* Add confidence signals
+
+Latency drops immediately.
+
+---
+
+### Phase 3 — Confidence gating + fallbacks (2–3 weeks)
+
+**Goal:** LLM is no longer default.
+
+Work:
+
+* Embedding gap logic
+* Chunk agreement checks
+* Metadata alignment scoring
+* LLM invoked only on low confidence
+* Heuristic fallback path
+
+Cost + SLA stabilize here.
+
+---
+
+### Phase 4 — Async boundaries & resilience (2–3 weeks)
+
+**Goal:** production maturity.
+
+Work:
+
+* Async deep classification
+* Backpressure propagation
+* Rate-aware routing
+* Graceful degradation modes
+
+This is where ops pain disappears.
+
+---
+
+## Timeline summary
+
+| Phase                        | Duration         |
+| ---------------------------- | ---------------- |
+| Phase 0: Alignment           | 1–2 weeks        |
+| Phase 1: Deterministic spine | 2–3 weeks        |
+| Phase 2: Collapse LLM calls  | 2 weeks          |
+| Phase 3: Confidence gating   | 2–3 weeks        |
+| Phase 4: Resilience          | 2–3 weeks        |
+| **Total**                    | **~12–16 weeks** |
+
+---
+
+## Team size reality check
+
+This assumes:
+
+* **3–5 strong engineers**
+* 1 architect (you)
+* No major org friction
+* No constant scope churn
+
+With fewer people → add ~30–40%.
+
+---
+
+## What you’ll feel at each milestone
+
+* **Week 4:** “Latency suddenly looks sane”
+* **Week 6:** “Why were we calling LLM so much?”
+* **Week 8:** “Costs stopped being scary”
+* **Week 12:** “This thing is boringly stable”
+* **Month 5:** “We can finally innovate safely”
+
+---
+
+## Hard truth (worth saying)
+
+> If leadership expects a *clean-slate quality system* in 4–6 weeks, they don’t yet understand the problem.
+
+But the **ROI starts showing in ~6 weeks**, not 6 months.
+
+---
+
+## Final framing you can use upward
+
+> *“We can de-risk the system in ~8 weeks and reach a best-in-class architecture in ~4 months without stopping production.”*
+
 If you want next, I can:
 
-* draw the **clean-slate architecture diagram**
-* write **service-level contracts**
-* or help you decide **incremental vs rewrite** realistically
+* help you pick a **cut-line** (what to fix vs leave)
+* draft a **migration plan with checkpoints**
+* or translate this into a **leadership roadmap slide**
+
