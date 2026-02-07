@@ -542,11 +542,329 @@ Retrieval → Rerank → Feedback → Retrain → Improve
 
 ---
 
-If you want next, I can:
+Yes — you’re remembering correctly.
 
-* Convert this into a PowerPoint-ready structured slide outline
-* Or give you a more technical “system components diagram” version (microservices view)
-* Or provide a latency & infra sizing diagram for 200K/day
+Earlier we discussed **injecting hierarchical structure directly into the loss**, not just handling it via hard negatives.
 
-Which one?
+Let me restate it clearly.
 
+---
+
+# What We Discussed: Hierarchy-Aware Loss Injection
+
+The idea was:
+
+> Don’t treat all negatives equally.
+> Penalize errors differently depending on taxonomy distance.
+
+Instead of flat contrastive loss, we make it **hierarchy-aware**.
+
+There were three main approaches.
+
+---
+
+# 1️⃣ Distance-Weighted Contrastive Loss (Bi-Encoder)
+
+In normal MNR:
+
+All negatives are treated equally.
+
+In hierarchy-aware MNR:
+
+You weight negatives based on tree distance.
+
+Example:
+
+If true label = L3
+Sibling label = L3b
+Different branch label = L9
+
+You assign:
+
+* Higher penalty for confusing L3 vs L3b
+* Lower penalty for confusing L3 vs L9
+
+Because sibling confusion is worse.
+
+Formally:
+
+Loss weight ∝ 1 / (tree_distance + ε)
+
+This forces sharper sibling separation.
+
+---
+
+# 2️⃣ Hierarchical Soft Labels (Cross-Encoder)
+
+Instead of one-hot target:
+
+You create a soft distribution.
+
+Example:
+
+True label probability = 1.0
+Sibling labels = 0.1
+Other labels = 0.01
+
+Then normalize.
+
+This teaches:
+
+“Sibling is wrong, but less wrong than distant label.”
+
+This smooths training and stabilizes tight clusters.
+
+---
+
+# 3️⃣ Parent-Child Multi-Task Loss (Optional)
+
+Predict:
+
+* Parent category
+* Child category
+
+Total loss:
+
+L = L_parent + L_child
+
+This enforces structural awareness.
+
+But we deprioritized this because:
+
+You require single-label final output,
+not hierarchical multi-output.
+
+---
+
+# Why We Didn’t Make It Core
+
+Because your current pipeline already handles hierarchy via:
+
+* Hard negative mining
+* Listwise competition
+* Confusion injection
+
+Explicit hierarchy loss adds complexity and tuning overhead.
+
+It’s powerful — but not necessary for v1.
+
+---
+
+# When Hierarchy-Aware Loss Is Actually Worth It
+
+Add it if:
+
+* Sibling confusion remains dominant after training
+* Cross-encoder struggles even with listwise setup
+* Taxonomy depth ≥ 3 levels
+* Many labels per parent (≥10 children)
+
+Then hierarchy-aware weighting can help.
+
+---
+
+# Clean Practical Recommendation
+
+For now:
+
+* Keep sibling hard negatives.
+* Keep listwise training.
+
+If confusion persists:
+
+Add **distance-weighted negative scaling in bi-encoder MNR**.
+
+That’s the safest injection point.
+
+---
+
+# What You Were Remembering
+
+We discussed:
+
+> Injecting tree-distance weighting into contrastive loss.
+
+Yes — that’s the correct memory.
+
+---
+
+If you want, I can now:
+
+* Write the exact modified MNR formula with hierarchy weighting
+* Or simulate how this changes gradient behavior
+* Or explain when hierarchy-aware loss actually harms performance
+
+Which direction?
+
+Perfect — let’s make this **simple and intuitive**.
+
+No heavy math. Just the core idea.
+
+---
+
+# The Problem
+
+In normal MNR training:
+
+All wrong labels are treated equally.
+
+But in your taxonomy:
+
+* Confusing **Billing vs Invoice** (siblings) is a big mistake.
+* Confusing **Billing vs Shipping** (different branch) is less likely and less harmful.
+
+Standard MNR does not know this.
+
+So siblings often stay too close in embedding space.
+
+---
+
+# The Simple Fix
+
+We change the loss so that:
+
+> The model pushes sibling labels away **harder** than distant labels.
+
+That’s it.
+
+---
+
+# Normal MNR (Conceptually)
+
+The loss says:
+
+“Make the correct label closer than all others.”
+
+All negatives pull equally.
+
+---
+
+# Hierarchy-Aware MNR (Conceptually)
+
+The loss now says:
+
+“Make the correct label closer,
+and push sibling labels away **extra hard**.”
+
+So instead of:
+
+All negatives = same strength
+
+We use:
+
+Sibling negative = strong push
+Distant negative = weak push
+
+---
+
+# How We Do It (Very Simple Formula)
+
+For each wrong label:
+
+We multiply its penalty by a weight:
+
+```
+weight = 1 / (tree_distance + small_number)
+```
+
+So:
+
+| Label Type | Distance | Weight | Effect           |
+| ---------- | -------- | ------ | ---------------- |
+| Sibling    | 1        | High   | Strong push away |
+| Cousin     | 2        | Medium | Medium push      |
+| Far label  | 3+       | Low    | Light push       |
+
+That’s the entire modification.
+
+---
+
+# What Happens to Gradients (Intuition)
+
+During training:
+
+Without hierarchy weighting:
+
+* Model spreads everything apart evenly.
+
+With hierarchy weighting:
+
+* Model creates stronger local separation.
+* Dense sibling clusters get cleaner boundaries.
+
+It reshapes the embedding space like this:
+
+Before:
+
+```
+Billing – Invoice – Payment (too close)
+```
+
+After:
+
+```
+Billing      Invoice
+      \      /
+       Email
+```
+
+Cleaner structure.
+
+---
+
+# Why This Helps You
+
+Because your real pain is:
+
+Sibling confusion.
+
+This modification directly attacks that.
+
+It improves:
+
+* Retrieval quality in dense branches
+* Cross-encoder reranking stability
+* Overall top-1 accuracy
+
+---
+
+# Important: It Doesn’t Break Retrieval
+
+We are NOT:
+
+* Changing positives
+* Removing negatives
+* Changing inference
+
+We are only scaling how strongly certain negatives affect training.
+
+So recall stays stable.
+
+---
+
+# When To Use It
+
+Use this if:
+
+* You see sibling confusion dominating errors
+* Embeddings cluster siblings too tightly
+* Cross-encoder is working too hard
+
+---
+
+# One-Line Summary
+
+Hierarchy-weighted MNR =
+“Push similar wrong labels away harder than distant wrong labels.”
+
+That’s it.
+
+---
+
+If you want, next I can:
+
+* Show exactly where in your current pipeline this plugs in
+* Or explain when this idea actually backfires
+* Or compare it to using hierarchical softmax instead
+
+Your move.
