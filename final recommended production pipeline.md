@@ -861,10 +861,142 @@ That’s it.
 
 ---
 
-If you want, next I can:
+Yes — and more importantly, it fits **cleanly and safely** into your email-layer pipeline without changing the architecture.
 
-* Show exactly where in your current pipeline this plugs in
-* Or explain when this idea actually backfires
-* Or compare it to using hierarchical softmax instead
+Let’s connect it directly to your existing system so it’s crystal clear.
+
+---
+
+# Where It Fits in Your Pipeline
+
+Your current production design:
+
+Email
+→ **Bi-Encoder (Retrieval)**
+→ Top-20
+→ **Cross-Encoder (Rerank)**
+→ Top-1
+
+Hierarchy-weighted MNR modifies only:
+
+> 🔷 Stage 4 — Bi-Encoder Training
+
+It does NOT change:
+
+* Inference flow
+* Cross-encoder
+* Distillation
+* Latency
+* Storage
+* Logging
+
+So yes — it aligns perfectly.
+
+---
+
+# Why It’s Especially Aligned With Your Email Layer
+
+Remember your constraints:
+
+* Hierarchical overlapping taxonomy
+* Single-label mandatory
+* Sibling confusion is dominant
+* 200K emails/day (so retrieval must be strong)
+
+Hierarchy-weighted MNR strengthens exactly what retrieval needs:
+
+> Clean separation inside dense sibling clusters.
+
+That improves:
+
+* Recall@K in tight branches
+* Candidate quality for cross-encoder
+* Stability under taxonomy growth
+
+---
+
+# How It Interacts With the Cross-Encoder
+
+Very nicely.
+
+Bi-Encoder (with hierarchy weighting):
+
+* Creates better local geometry
+* Reduces extreme sibling overlap
+
+Cross-Encoder:
+
+* Still resolves final subtle differences
+* Works with cleaner candidate sets
+
+So:
+
+Retrieval becomes smarter
+Reranker becomes sharper
+
+They don’t conflict.
+
+---
+
+# Does It Break Silver Data or Distillation?
+
+No.
+
+In fact:
+
+* Silver mining becomes cleaner (fewer ambiguous near-ties)
+* Distillation becomes more stable (teacher signals less noisy)
+
+---
+
+# What It Changes Practically
+
+Before:
+
+* Siblings tightly clustered
+* Cross-encoder does heavy lifting
+
+After:
+
+* Siblings moderately separated
+* Cross-encoder focuses on fine-grained nuances
+
+It reduces pressure on the reranking layer.
+
+---
+
+# Should You Add It Now or Later?
+
+My recommendation:
+
+Phase it in after:
+
+* You train baseline MNR
+* Measure sibling confusion rate
+
+If confusion remains concentrated inside parent groups → enable hierarchy weighting.
+
+No need to over-engineer v1.
+
+---
+
+# Final Answer
+
+Yes — it aligns perfectly with your email-layer pipeline.
+
+It strengthens the retrieval layer
+without changing architecture
+without increasing inference cost
+and without complicating training loops.
+
+---
+
+If you want, next we can:
+
+* Stress-test this against taxonomy changes
+* Or simulate what happens when new sibling labels are added
+* Or quantify expected accuracy lift from adding this
+
+Your call.
 
 Your move.
